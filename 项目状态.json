@@ -1,0 +1,67 @@
+{
+  "project_name": "海贼王剪辑项目",
+  "last_updated": "2026-03-01",
+  "status": "completed",
+  "source_material": {
+    "bilibili_url": "https://www.bilibili.com/video/BV1Tu4y1m76S",
+    "download_location": "D:/海贼王剪辑项目/素材/"
+  },
+  "segments": {
+    "duration_seconds": 4,
+    "total_segments": 18,
+    "selected_segments": ["素材003", "素材006", "素材008", "素材004", "素材009", "素材007", "素材001"],
+    "segments_folder": "D:/海贼王剪辑项目/素材片段/海贼王经典战斗混剪1/"
+  },
+  "output_videos": [
+    {
+      "filename": "精选合成.mp4",
+      "path": "D:/海贼王剪辑项目/输出/精选合成.mp4",
+      "size_mb": 7.5,
+      "description": "原始合成视频"
+    },
+    {
+      "filename": "精选合成_新BGM.mp4",
+      "path": "D:/海贼王剪辑项目/输出/精选合成_新BGM.mp4",
+      "size_mb": 7.5,
+      "description": "替换BGM后"
+    },
+    {
+      "filename": "精选合成_抖音竖屏.mp4",
+      "path": "D:/海贼王剪辑项目/输出/精选合成_抖音竖屏.mp4",
+      "size_mb": 6.8,
+      "resolution": "1080x1920",
+      "description": "抖音竖屏格式"
+    },
+    {
+      "filename": "精选合成_保留人声_新BGM_简单版.mp4",
+      "path": "D:/海贼王剪辑项目/输出/精选合成_保留人声_新BGM_简单版.mp4",
+      "size_mb": 6.8,
+      "description": "保留人声+新BGM (FFmpeg简单方法)"
+    }
+  ],
+  "audio_files": {
+    "original": "D:/海贼王剪辑项目/分离音频/original_audio.wav",
+    "vocals": "D:/海贼王剪辑项目/分离音频/vocals_center.wav",
+    "bgm_sides": "D:/海贼王剪辑项目/分离音频/bgm_sides.wav",
+    "mixed": "D:/海贼王剪辑项目/分离音频/mixed_vocals_new_bgm.aac"
+  },
+  "bgm": {
+    "name": "逆光",
+    "path": "D:/海贼王剪辑项目/BGM/逆光.mp3"
+  },
+  "scripts": {
+    "ai_editor": "D:/海贼王剪辑项目/脚本/ai_editor.py",
+    "split_video": "D:/海贼王剪辑项目/脚本/split_video.py",
+    "download_materials": "D:/海贼王剪辑项目/脚本/download_materials.py",
+    "simple_vocal_extract": "D:/海贼王剪辑项目/脚本/simple_vocal_extract.py",
+    "vocal_separator": "D:/海贼王剪辑项目/脚本/vocal_separator.py",
+    "separate_vocal": "D:/海贼王剪辑项目/脚本/separate_vocal.py"
+  },
+  "notes": {
+    "vocal_separation": "AI人声分离因网络问题模型下载失败，已使用FFmpeg简单方法替代",
+    "ai_separation_alternatives": [
+      "https://vocalremover.org",
+      "https://www.lalal.ai"
+    ]
+  }
+}

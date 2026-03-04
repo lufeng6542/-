@@ -1,0 +1,23 @@
+# 海贼王剪辑项目依赖
+
+# ============ 核心依赖 =============
+moviepy>=2.8.0
+librosa>=1.8.0
+numpy>=1.18.0
+imageio-ffmpeg>=0.4.0
+yt-dlp>=2023.2.24
+openai-whisper>=20230311
+
+demucs>=4.0.0
+audio-separator>=0.2.3
+
+onnxruntime>=1.13.0  # 可选: GPU加速
+
+# ============ 工具依赖 =============
+ffmpeg-python>=3.0.2    # FFmpeg Python绑定
+imageio-ffmpeg>=0.4.2    # 图像/视频处理
+pillow>=9.3.0
+requests>=2.26.0
+beautifulsoup4>=4.11.0
+# ============ 可装方法 =============
+pip install -r imageio-ffmpeg librosa numpy yt-dlp demucs audio-separator onnxruntime openai-whisper beautifulsoup4 requests
