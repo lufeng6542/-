@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-海贼王剪辑项目 - 统一命令行入口
-统一管理所有功能
+视频创作工具 - 统一命令行入口
+AI视频生成 + AI图片生成 + 视频剪辑一站式工具
 """
 
 import sys
@@ -20,6 +20,9 @@ from core.video_splitter import VideoSplitter
 from core.vocal_separator import VocalSeparator
 from core.explosion_analyzer import ExplosionAnalyzer
 from core.video_editor import VideoEditor
+from ai_generator.image_generator import generate as gen_image
+from ai_generator.video_generator import generate_from_text as gen_video, generate_from_image as gen_img2video
+from ai_generator.quality_checker import check as verify_video
 
 
 def cmd_split(args):
@@ -101,9 +104,53 @@ def cmd_auto(args):
     editor.run()
 
 
+def cmd_gen_image(args):
+    """AI生成图片"""
+    output = args.output or "素材/ai_generated.png"
+    gen_image(args.prompt, output, ar=args.ar, size=args.size)
+
+
+def cmd_gen_video(args):
+    """AI生成视频（文生视频）"""
+    output = args.output or "素材/ai_generated.mp4"
+    gen_video(args.prompt, output, ar=args.ar, quality=args.quality,
+              auto_verify=args.auto_verify)
+
+
+def cmd_gen_img2video(args):
+    """AI生成视频（图生视频）"""
+    output = args.output or "素材/ai_generated.mp4"
+    gen_img2video(args.image, args.prompt, output, ar=args.ar, quality=args.quality,
+                  auto_verify=args.auto_verify)
+
+
+def cmd_verify(args):
+    """视频质量验证"""
+    verify_video(args.input, args.prompt, output_dir=args.output)
+
+
+def cmd_task_status(args):
+    """查询异步任务状态"""
+    from ai_generator.zhipu_client import ZhipuClient
+    client = ZhipuClient()
+    result = client.query_task_status(args.task_id)
+
+    status = result.get("task_status", "未知")
+    print(f"\n  任务ID: {args.task_id}")
+    print(f"  状态: {status}")
+
+    if status == "SUCCESS":
+        videos = result.get("video_result", [])
+        if videos:
+            print(f"  视频URL: {videos[0]['url']}")
+            print(f"  封面URL: {videos[0].get('cover_image_url', '无')}")
+    elif status == "FAIL":
+        print(f"  失败原因: {result}")
+
+
 def main():
     parser = argparse.ArgumentParser(
-        description="海贼王剪辑项目 - 统一命令行工具"
+        description="视频创作工具 - AI生成 + 视频剪辑一站式命令行"
     )
     subparsers = parser.add_subparsers(dest="command", help="可用命令")
 
@@ -134,6 +181,44 @@ def main():
     # auto 命令
     auto_parser = subparsers.add_parser("auto", help="自动剪辑流程")
 
+    # gen 命令组
+    gen_parser = subparsers.add_parser("gen", help="AI生成（图片/视频）")
+    gen_subparsers = gen_parser.add_subparsers(dest="gen_command", help="生成类型")
+
+    # gen image
+    gen_image_parser = gen_subparsers.add_parser("image", help="AI生成图片")
+    gen_image_parser.add_argument("prompt", help="提示词")
+    gen_image_parser.add_argument("--ar", default="1:1", help="宽高比 (1:1, 16:9, 9:16, 4:3, 3:4)")
+    gen_image_parser.add_argument("--size", help="指定尺寸 (如 1280x720)")
+    gen_image_parser.add_argument("--output", "-o", help="输出路径")
+
+    # gen video
+    gen_video_parser = gen_subparsers.add_parser("video", help="AI生成视频（文生视频）")
+    gen_video_parser.add_argument("prompt", help="提示词")
+    gen_video_parser.add_argument("--ar", default="16:9", help="宽高比")
+    gen_video_parser.add_argument("--quality", "-q", default="speed", choices=["speed", "quality"], help="生成质量")
+    gen_video_parser.add_argument("--auto-verify", action="store_true", help="生成后自动验证质量")
+    gen_video_parser.add_argument("--output", "-o", help="输出路径")
+
+    # gen img2video
+    gen_img2video_parser = gen_subparsers.add_parser("img2video", help="AI生成视频（图生视频）")
+    gen_img2video_parser.add_argument("image", help="首帧图片路径")
+    gen_img2video_parser.add_argument("prompt", help="提示词")
+    gen_img2video_parser.add_argument("--ar", default="16:9", help="宽高比")
+    gen_img2video_parser.add_argument("--quality", "-q", default="speed", choices=["speed", "quality"], help="生成质量")
+    gen_img2video_parser.add_argument("--auto-verify", action="store_true", help="生成后自动验证质量")
+    gen_img2video_parser.add_argument("--output", "-o", help="输出路径")
+
+    # verify 命令
+    verify_parser = subparsers.add_parser("verify", help="视频质量验证")
+    verify_parser.add_argument("--input", "-i", required=True, help="视频文件")
+    verify_parser.add_argument("prompt", help="原始提示词")
+    verify_parser.add_argument("--output", "-o", help="输出目录")
+
+    # task-status 命令
+    task_parser = subparsers.add_parser("task-status", help="查询AI生成任务状态")
+    task_parser.add_argument("task_id", help="任务ID")
+
     args = parser.parse_args()
 
     if args.command == "split":
@@ -146,6 +231,19 @@ def main():
         cmd_analyze(args)
     elif args.command == "auto":
         cmd_auto(args)
+    elif args.command == "gen":
+        if args.gen_command == "image":
+            cmd_gen_image(args)
+        elif args.gen_command == "video":
+            cmd_gen_video(args)
+        elif args.gen_command == "img2video":
+            cmd_gen_img2video(args)
+        else:
+            print("用法: python cli.py gen {image|video|img2video}")
+    elif args.command == "verify":
+        cmd_verify(args)
+    elif args.command == "task-status":
+        cmd_task_status(args)
     else:
         # 显示快速菜单
         show_quick_menu()
@@ -154,20 +252,28 @@ def main():
 def show_quick_menu():
     """显示快速菜单"""
     print("\n" + "=" * 50)
-    print("    海贼王剪辑项目 - 快速菜单")
+    print("    视频创作工具 - 快速菜单")
     print("=" * 50)
-    print("\n可用命令:")
+    print("\n剪辑命令:")
     print("  split      分割视频素材")
     print("  separate   人声分离 (去除BGM)")
     print("  edit       视频编辑合成")
     print("  analyze    爆点分析")
     print("  auto       自动剪辑流程")
+    print("\nAI生成命令:")
+    print("  gen image        AI生成图片")
+    print("  gen video        AI生成视频（文生视频）")
+    print("  gen img2video    AI生成视频（图生视频）")
+    print("  verify           视频质量验证")
+    print("  task-status      查询AI生成任务状态")
     print("\n示例:")
     print("  python cli.py split -i 视频.mp4 -d 4")
-    print("  python cli.py separate -i 视频.mp4")
     print("  python cli.py edit -i 片段目录 -b BGM.mp3")
-    print("  python cli.py analyze -i 视频.mp4")
-    print("  python cli.py auto")
+    print("  python cli.py gen image \"一只猫\" --ar 16:9")
+    print("  python cli.py gen video \"海浪拍打沙滩\" --ar 16:9 --auto-verify")
+    print("  python cli.py gen img2video 首帧.png \"猫咪奔跑\" --ar 9:16")
+    print("  python cli.py verify -i 视频.mp4 \"海浪拍打沙滩\"")
+    print("  python cli.py task-status <任务ID>")
 
 
 if __name__ == "__main__":

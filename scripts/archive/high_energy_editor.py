@@ -18,7 +18,7 @@ sys.path.insert(0, str(PROJECT_ROOT / "utils"))
 from ffmpeg_utils import FFMPEG_PATH, get_video_duration
 
 # 素材库路径
-MATERIAL_DIR = Path("E:/海贼王临时素材库")
+MATERIAL_DIR = PROJECT_ROOT / "素材"
 OUTPUT_DIR = PROJECT_ROOT / "输出" / "高燃剪辑"
 TEMP_DIR = OUTPUT_DIR / "temp_segments"
 
