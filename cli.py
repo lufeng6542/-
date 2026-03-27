@@ -148,6 +148,27 @@ def cmd_task_status(args):
         print(f"  失败原因: {result}")
 
 
+def cmd_history(args):
+    """查看AI生成历史记录"""
+    from ai_generator.output_manager import list_records
+    records = list_records(record_type=args.type, limit=args.limit)
+
+    if not records:
+        print("\n  暂无生成记录")
+        return
+
+    type_labels = {"image": "图片", "video": "视频", "img2video": "图生视频", "verify": "验证"}
+    print(f"\n  最近 {len(records)} 条生成记录:\n")
+    for i, r in enumerate(records, 1):
+        label = type_labels.get(r.get("type", ""), r.get("type", ""))
+        elapsed = r.get("elapsed_seconds", "")
+        time_str = f" ({elapsed}s)" if elapsed else ""
+        print(f"  {i}. [{label}] {r['time']}")
+        print(f"     提示词: {r['prompt'][:60]}{'...' if len(r['prompt']) > 60 else ''}")
+        print(f"     文件: {r['output']}{time_str}")
+        print()
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="视频创作工具 - AI生成 + 视频剪辑一站式命令行"
@@ -219,6 +240,11 @@ def main():
     task_parser = subparsers.add_parser("task-status", help="查询AI生成任务状态")
     task_parser.add_argument("task_id", help="任务ID")
 
+    # history 命令
+    history_parser = subparsers.add_parser("history", help="查看AI生成历史记录")
+    history_parser.add_argument("--type", "-t", choices=["image", "video", "img2video", "verify"], help="筛选类型")
+    history_parser.add_argument("--limit", "-n", type=int, default=10, help="显示条数")
+
     args = parser.parse_args()
 
     if args.command == "split":
@@ -244,6 +270,8 @@ def main():
         cmd_verify(args)
     elif args.command == "task-status":
         cmd_task_status(args)
+    elif args.command == "history":
+        cmd_history(args)
     else:
         # 显示快速菜单
         show_quick_menu()
@@ -266,6 +294,7 @@ def show_quick_menu():
     print("  gen img2video    AI生成视频（图生视频）")
     print("  verify           视频质量验证")
     print("  task-status      查询AI生成任务状态")
+    print("  history          查看AI生成历史记录")
     print("\n示例:")
     print("  python cli.py split -i 视频.mp4 -d 4")
     print("  python cli.py edit -i 片段目录 -b BGM.mp3")
@@ -274,6 +303,7 @@ def show_quick_menu():
     print("  python cli.py gen img2video 首帧.png \"猫咪奔跑\" --ar 9:16")
     print("  python cli.py verify -i 视频.mp4 \"海浪拍打沙滩\"")
     print("  python cli.py task-status <任务ID>")
+    print("  python cli.py history")
 
 
 if __name__ == "__main__":

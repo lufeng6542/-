@@ -4,9 +4,11 @@
 AI图片生成器 - 智谱CogView-4
 """
 
+import time
 from pathlib import Path
 
 from .zhipu_client import ZhipuClient
+from .output_manager import resolve_output_path, save_record
 
 # 智谱支持的图片尺寸（1024-2048px，32的倍数）
 STANDARD_SIZES = [
@@ -81,17 +83,30 @@ def generate(prompt, output_path, ar="1:1", size=None, model=None):
     Returns:
         str: 保存的文件路径
     """
+    # 输入校验
+    if not prompt or not prompt.strip():
+        raise ValueError("提示词不能为空，请描述你想要生成的图片内容")
+
     client = ZhipuClient()
     size = size or ar_to_size(ar)
+    model = model or "cogview-4"
 
-    print(f"生成图片: {prompt[:50]}...")
-    print(f"  模型: {model or 'cogview-4'}, 尺寸: {size}")
+    # 如果用户没有指定输出路径，自动归档到 ai_output/
+    output_path = Path(output_path)
+    if not output_path.is_absolute() and str(output_path).startswith("素材/"):
+        output_path = resolve_output_path(output_path.name, subdir="images")
+    output_path.parent.mkdir(parents=True, exist_ok=True)
 
+    print(f"生成图片: {prompt[:50]}{'...' if len(prompt) > 50 else ''}")
+    print(f"  模型: {model}, 尺寸: {size}")
+
+    t0 = time.time()
     result = client.generate_image(prompt, model=model, size=size)
-
-    if not result:
-        raise RuntimeError("图片生成返回为空")
-
     saved = client.download_image(result[0], output_path)
-    print(f"  已保存: {saved}")
+    elapsed = time.time() - t0
+
+    print(f"  已保存: {saved} ({elapsed:.1f}s)")
+
+    # 保存生成记录
+    save_record("image", prompt, saved, model=model, size=size, ar=ar, elapsed_seconds=round(elapsed, 1))
     return saved

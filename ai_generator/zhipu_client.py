@@ -45,6 +45,40 @@ def _progress_bar(current, total, width=30):
     return f"[{bar}] {ratio:.0%}"
 
 
+# API错误码 → 中文翻译
+_ERROR_MESSAGES = {
+    400: "请求参数有误，请检查输入",
+    401: "API密钥无效或已过期，请检查 ZHIPU_API_KEY",
+    403: "无权访问该模型，请检查账户权限和余额",
+    404: "接口不存在，请检查API地址",
+    429: "请求过于频繁，请稍后再试",
+    500: "智谱服务器内部错误，请稍后重试",
+    502: "智谱服务暂时不可用，请稍后重试",
+    503: "智谱服务维护中，请稍后重试",
+}
+
+
+def _translate_error(status_code, response_text):
+    """将API错误翻译为中文"""
+    msg = _ERROR_MESSAGES.get(status_code)
+    if msg:
+        return f"[{status_code}] {msg}"
+    # 尝试从响应JSON中提取error信息
+    try:
+        data = json.loads(response_text)
+        err = data.get("error", {})
+        if isinstance(err, dict):
+            detail = err.get("message", "")
+            code = err.get("code", "")
+            if detail:
+                return f"[{status_code}] {detail}"
+            if code:
+                return f"[{status_code}] {code}"
+    except (json.JSONDecodeError, AttributeError):
+        pass
+    return f"[{status_code}] {response_text[:200]}"
+
+
 class ZhipuClient:
     """智谱AI API客户端"""
 
@@ -111,10 +145,12 @@ class ZhipuClient:
         }, timeout=60)
 
         if resp.status_code != 200:
-            raise RuntimeError(f"图片生成失败 ({resp.status_code}): {resp.text}")
+            raise RuntimeError(f"图片生成失败: {_translate_error(resp.status_code, resp.text)}")
 
         data = resp.json()
-        return data.get("data", [])
+        if not data.get("data"):
+            raise RuntimeError("图片生成失败: 服务端未返回图片数据")
+        return data["data"]
 
     def download_image(self, image_data, output_path):
         """下载图片（URL或base64）并保存"""
@@ -138,7 +174,7 @@ class ZhipuClient:
         elif image_data.get("b64_json"):
             output_path.write_bytes(base64.b64decode(image_data["b64_json"]))
         else:
-            raise ValueError("响应中无图片数据")
+            raise ValueError("图片下载失败: 服务端返回的数据格式异常")
 
         return str(output_path)
 
@@ -175,7 +211,7 @@ class ZhipuClient:
                 data = resp.json()
                 task_id = data.get("id")
                 if not task_id:
-                    raise RuntimeError("响应中无任务ID")
+                    raise RuntimeError("视频生成失败: 服务端未返回任务ID")
                 _interrupted_tasks.append(task_id)
                 print(f"成功")
                 return task_id
@@ -190,9 +226,9 @@ class ZhipuClient:
                 print()
                 continue
 
-            raise RuntimeError(f"视频生成提交失败 ({resp.status_code}): {resp.text}")
+            raise RuntimeError(f"视频生成提交失败: {_translate_error(resp.status_code, resp.text)}")
 
-        raise RuntimeError("视频生成提交失败（超过最大重试次数）")
+        raise RuntimeError("视频生成提交失败: 超过最大重试次数(5次)，请稍后再试")
 
     def poll_video_result(self, task_id, max_attempts=120, interval=5):
         """
@@ -210,7 +246,7 @@ class ZhipuClient:
             resp = requests.get(url, headers=self._headers(), timeout=30)
 
             if resp.status_code != 200:
-                raise RuntimeError(f"轮询失败 ({resp.status_code}): {resp.text}")
+                raise RuntimeError(f"查询任务状态失败: {_translate_error(resp.status_code, resp.text)}")
 
             data = resp.json()
             status = data.get("task_status")
@@ -218,7 +254,7 @@ class ZhipuClient:
             if status == "SUCCESS":
                 videos = data.get("video_result", [])
                 if not videos:
-                    raise RuntimeError("视频结果为空")
+                    raise RuntimeError("视频生成失败: 服务端返回空结果")
                 # 从跟踪列表中移除
                 if task_id in _interrupted_tasks:
                     _interrupted_tasks.remove(task_id)
@@ -230,7 +266,7 @@ class ZhipuClient:
             if status == "FAIL":
                 if task_id in _interrupted_tasks:
                     _interrupted_tasks.remove(task_id)
-                raise RuntimeError("视频生成任务失败")
+                raise RuntimeError("视频生成失败: 服务端处理出错，请调整提示词后重试")
 
             elapsed = int(time.time() - start_time)
             remaining = max(0, estimated_time - elapsed)
@@ -252,7 +288,7 @@ class ZhipuClient:
             time.sleep(interval)
 
         print()
-        raise RuntimeError("视频生成超时")
+        raise RuntimeError("视频生成超时: 等待超过10分钟，请用 task-status 查询任务是否完成")
 
     def download_video(self, video_url, output_path):
         """下载视频并保存（带进度条）"""
@@ -286,7 +322,7 @@ class ZhipuClient:
         url = f"{self.base_url}/async-result/{task_id}"
         resp = requests.get(url, headers=self._headers(), timeout=30)
         if resp.status_code != 200:
-            raise RuntimeError(f"查询失败 ({resp.status_code}): {resp.text}")
+            raise RuntimeError(f"查询任务失败: {_translate_error(resp.status_code, resp.text)}")
         return resp.json()
 
     # ---- 视觉分析 ----
@@ -314,7 +350,7 @@ class ZhipuClient:
         }, timeout=60)
 
         if resp.status_code != 200:
-            raise RuntimeError(f"视觉分析失败 ({resp.status_code}): {resp.text}")
+            raise RuntimeError(f"视觉分析失败: {_translate_error(resp.status_code, resp.text)}")
 
         data = resp.json()
         return data["choices"][0]["message"]["content"]
@@ -351,7 +387,7 @@ class ZhipuClient:
         }, timeout=60)
 
         if resp.status_code != 200:
-            raise RuntimeError(f"评分失败 ({resp.status_code}): {resp.text}")
+            raise RuntimeError(f"质量评分失败: {_translate_error(resp.status_code, resp.text)}")
 
         text = resp.json()["choices"][0]["message"]["content"]
 

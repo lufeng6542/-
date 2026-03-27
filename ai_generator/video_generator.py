@@ -5,9 +5,11 @@ AI视频生成器 - 智谱CogVideoX-3
 支持文生视频和图生视频
 """
 
+import time
 from pathlib import Path
 
 from .zhipu_client import ZhipuClient
+from .output_manager import resolve_output_path, save_record
 
 # 视频尺寸映射
 VIDEO_SIZES = {
@@ -42,12 +44,26 @@ def generate_from_text(prompt, output_path, ar="16:9", quality="speed", model=No
     Returns:
         str: 保存的文件路径
     """
+    if not prompt or not prompt.strip():
+        raise ValueError("提示词不能为空，请描述你想要生成的视频内容")
+    if quality not in ("speed", "quality"):
+        raise ValueError(f"质量参数错误: '{quality}'，只能是 speed 或 quality")
+
     client = ZhipuClient()
+    model = model or "cogvideox-3"
     size = VIDEO_SIZES.get(ar, "1920x1080")
 
+    # 自动归档到 ai_output/
+    output_path = Path(output_path)
+    if not output_path.is_absolute() and str(output_path).startswith("素材/"):
+        output_path = resolve_output_path(output_path.name, subdir="videos")
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
     print(f"\n生成视频: {prompt[:50]}{'...' if len(prompt) > 50 else ''}")
-    print(f"  模型: {model or 'cogvideox-3'}, 尺寸: {size}, 质量: {quality}")
+    print(f"  模型: {model}, 尺寸: {size}, 质量: {quality}")
     print(f"  按 Ctrl+C 可中断（任务仍在服务端运行）\n")
+
+    t0 = time.time()
 
     # 1. 提交任务
     task_id = client.submit_video_task(prompt, model=model, size=size, quality=quality)
@@ -58,9 +74,14 @@ def generate_from_text(prompt, output_path, ar="16:9", quality="speed", model=No
 
     # 3. 下载
     saved = client.download_video(result["video_url"], output_path)
-    print(f"  已保存: {saved}")
+    elapsed = time.time() - t0
+    print(f"  已保存: {saved} ({elapsed:.1f}s)")
 
-    # 4. 自动验证
+    # 4. 保存生成记录
+    save_record("video", prompt, saved, model=model, size=size, ar=ar, quality=quality,
+                task_id=task_id, elapsed_seconds=round(elapsed, 1))
+
+    # 5. 自动验证
     if auto_verify:
         _run_verify(saved, prompt)
 
@@ -84,17 +105,31 @@ def generate_from_image(image_path, prompt, output_path, ar="16:9", quality="spe
     Returns:
         str: 保存的文件路径
     """
+    if not prompt or not prompt.strip():
+        raise ValueError("提示词不能为空，请描述你想要生成的视频内容")
+
     client = ZhipuClient()
+    model = model or "cogvideox-3"
     size = VIDEO_SIZES.get(ar, "1920x1080")
 
     img = Path(image_path)
     if not img.exists():
-        raise FileNotFoundError(f"图片不存在: {image_path}")
+        raise FileNotFoundError(f"图片文件不存在: {image_path}")
+    if img.suffix.lower() not in (".png", ".jpg", ".jpeg", ".webp"):
+        raise ValueError(f"不支持的图片格式: {img.suffix}，请使用 png/jpg/jpeg/webp")
+
+    # 自动归档到 ai_output/
+    output_path = Path(output_path)
+    if not output_path.is_absolute() and str(output_path).startswith("素材/"):
+        output_path = resolve_output_path(output_path.name, subdir="videos")
+    output_path.parent.mkdir(parents=True, exist_ok=True)
 
     print(f"\n图生视频: {prompt[:50]}{'...' if len(prompt) > 50 else ''}")
     print(f"  首帧: {image_path}")
-    print(f"  模型: {model or 'cogvideox-3'}, 尺寸: {size}, 质量: {quality}")
+    print(f"  模型: {model}, 尺寸: {size}, 质量: {quality}")
     print(f"  按 Ctrl+C 可中断（任务仍在服务端运行）\n")
+
+    t0 = time.time()
 
     # 1. 提交任务（带首帧图片）
     task_id = client.submit_video_task(
@@ -108,9 +143,14 @@ def generate_from_image(image_path, prompt, output_path, ar="16:9", quality="spe
 
     # 3. 下载
     saved = client.download_video(result["video_url"], output_path)
-    print(f"  已保存: {saved}")
+    elapsed = time.time() - t0
+    print(f"  已保存: {saved} ({elapsed:.1f}s)")
 
-    # 4. 自动验证
+    # 4. 保存生成记录
+    save_record("img2video", prompt, saved, model=model, size=size, ar=ar, quality=quality,
+                source_image=str(image_path), task_id=task_id, elapsed_seconds=round(elapsed, 1))
+
+    # 5. 自动验证
     if auto_verify:
         _run_verify(saved, prompt)
 
