@@ -1,0 +1,128 @@
+[
+  {
+    "index": 1,
+    "scene": "Modern open-plan office, late afternoon sunlight streaming through floor-to-ceiling windows, rows of designers working at their desks with dual monitors showing design software, coffee cups scattered, creative atmosphere",
+    "dialogue": "又是一个加班的周五。十年了，这间办公室就像第二个家。",
+    "role": "旁白",
+    "characters": ["男主"],
+    "mood": "bright",
+    "duration": 6.0
+  },
+  {
+    "index": 2,
+    "scene": "Close-up of a male designer in his mid-30s, short black hair, sharp eyes, slight stubble, wearing a casual shirt, focused on his screen, a satisfied smile as he finishes a design, proud of his work",
+    "dialogue": "老周，你看我这个方案，甲方肯定没话说。",
+    "role": "男主",
+    "characters": ["男主"],
+    "mood": "bright",
+    "duration": 4.0
+  },
+  {
+    "index": 3,
+    "scene": "A friendly colleague in his 30s leaning over the cubicle wall, giving a thumbs up, warm office lighting, camaraderie between coworkers, two professionals sharing a moment of mutual respect",
+    "dialogue": "厉害啊陈默，十年老设计果然不是白混的。",
+    "role": "配角男",
+    "characters": ["配角男"],
+    "mood": "bright",
+    "duration": 4.0
+  },
+  {
+    "index": 4,
+    "scene": "Suddenly the office door opens, a stern middle-aged boss in expensive suit walks in with a serious expression, holding a tablet, all employees look up, the warm atmosphere instantly freezes, dramatic shift in mood",
+    "dialogue": "所有人，会议室集合。现在。",
+    "role": "反派",
+    "characters": ["反派"],
+    "mood": "tense",
+    "duration": 3.5
+  },
+  {
+    "index": 5,
+    "scene": "Conference room, dimmer lighting, a large screen on the wall showing an AI interface logo, employees sitting around the table looking nervous, the boss standing at the head, pointing at the screen with a cold expression, a sense of dread in the room",
+    "dialogue": "公司引进了最新的AI设计系统。从下个月开始，所有设计稿先过AI。",
+    "role": "反派",
+    "characters": ["反派", "男主"],
+    "mood": "tense",
+    "duration": 5.0
+  },
+  {
+    "index": 6,
+    "scene": "The male lead sitting at the conference table, his confident expression crumbling, eyes wide with disbelief, coworkers around him exchanging worried glances, the weight of the announcement sinking in on everyone's faces",
+    "dialogue": "先过AI？那我们……",
+    "role": "男主",
+    "characters": ["男主"],
+    "mood": "tense",
+    "duration": 3.0
+  },
+  {
+    "index": 7,
+    "scene": "A colleague in his 30s standing at his desk holding a cardboard box with personal items, a small plant, family photo, his face pale and defeated, other employees watching in silence, cold office lighting, the harsh reality of layoffs",
+    "dialogue": "老李干了八年，AI来了一星期，他就得走了。",
+    "role": "旁白",
+    "characters": ["配角男"],
+    "mood": "dark",
+    "duration": 5.0
+  },
+  {
+    "index": 8,
+    "scene": "The male lead at his desk late at night, the office empty except for him, comparing his design on the left monitor with AI-generated design on the right, his hands trembling, visible shock on his face as he sees AI's work is better, cold blue monitor light on his face in the darkness",
+    "dialogue": "不可能……它怎么会想到这种构图……这明明是十年的直觉……",
+    "role": "男主",
+    "characters": ["男主"],
+    "mood": "dark",
+    "duration": 6.0
+  },
+  {
+    "index": 9,
+    "scene": "The boss's office, the male lead sitting across from the boss's large desk, the boss leaning back in his leather chair looking down at him with a mixture of pity and cold business logic, a tablet on the desk showing performance metrics comparing human vs AI output, power dynamic emphasizing the employee's vulnerability",
+    "dialogue": "陈默，AI一天出五十稿，你一周才出三稿。我需要的是效率，不是情怀。",
+    "role": "反派",
+    "characters": ["反派", "男主"],
+    "mood": "dramatic",
+    "duration": 7.0
+  },
+  {
+    "index": 10,
+    "scene": "Extreme close-up of the male lead's face, his confident sharp eyes now hollow and bloodshot, stubble grown longer, dark circles under his eyes, a single tear forming, years of exhaustion and broken pride written on every wrinkle, devastating emotional collapse",
+    "dialogue": "我花了十年才走到今天的位置……你告诉我，十年的经验，十秒就能被替代？",
+    "role": "男主",
+    "characters": ["男主"],
+    "mood": "dramatic",
+    "duration": 6.0
+  },
+  {
+    "index": 11,
+    "scene": "Wide shot of the boss standing by the floor-to-ceiling window looking out at the city night skyline, back turned to the male lead, a cold and final silhouette against the city lights, the power dynamic clear - one man's fate already decided",
+    "dialogue": "不是我替代你，是时代替代你。收拾东西吧。",
+    "role": "反派",
+    "characters": ["反派"],
+    "mood": "dark",
+    "duration": 5.0
+  },
+  {
+    "index": 12,
+    "scene": "The male lead walking slowly through the open-plan office carrying a cardboard box, past rows of empty desks with monitors still glowing, the AI interface visible on every screen, his footsteps echoing in the empty space, a lone figure walking away from everything he built",
+    "dialogue": "走出大门的那一刻，我才发现，不是我被开除了——是整个人类都在被开除的路上。",
+    "role": "旁白",
+    "characters": ["男主"],
+    "mood": "dark",
+    "duration": 7.0
+  },
+  {
+    "index": 13,
+    "scene": "The office building exterior at night, rain falling, the male lead standing in the rain looking up at the building, all windows dark except one floor where cold blue server lights flicker - the AI floor still running, never sleeping, the contrast between the wet lonely human and the relentless machine above",
+    "dialogue": "那层楼的灯再也不会关了。AI不需要休息，不需要工资，不需要尊严。",
+    "role": "旁白",
+    "characters": ["男主"],
+    "mood": "dark",
+    "duration": 7.0
+  },
+  {
+    "index": 14,
+    "scene": "Final shot: the empty office at night, hundreds of monitors glowing with the AI interface, rows and rows of empty chairs, a single nameplate '陈默 - 资深设计师' left behind on an empty desk, the camera slowly pulling back to reveal the scale of emptiness, cold and haunting",
+    "dialogue": "你的位置，还在吗？",
+    "role": "旁白",
+    "characters": [],
+    "mood": "dark",
+    "duration": 6.0
+  }
+]

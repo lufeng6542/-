@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-智谱AI基础客户端
+Kimi AI 基础客户端 (原智谱 → 已迁移到 Kimi)
 HTTP请求、API Key管理、错误翻译、进度条、信号处理
 """
 
@@ -20,7 +20,6 @@ _interrupted_tasks = []
 
 
 def _sigint_handler(signum, frame):
-    """Ctrl+C 安全中断"""
     if _interrupted_tasks:
         print(f"\n\n[中断] 任务仍在服务端运行，可稍后查询结果：")
         for tid in _interrupted_tasks:
@@ -34,21 +33,19 @@ def _sigint_handler(signum, frame):
 signal.signal(signal.SIGINT, _sigint_handler)
 
 
-# API错误码 → 中文翻译
 _ERROR_MESSAGES = {
     400: "请求参数有误，请检查输入",
-    401: "API密钥无效或已过期，请检查 ZHIPU_API_KEY",
+    401: "API密钥无效或已过期，请检查 KIMI_API_KEY",
     403: "无权访问该模型，请检查账户权限和余额",
     404: "接口不存在，请检查API地址",
     429: "请求过于频繁，请稍后再试",
-    500: "智谱服务器内部错误，请稍后重试",
-    502: "智谱服务暂时不可用，请稍后重试",
-    503: "智谱服务维护中，请稍后重试",
+    500: "Kimi 服务器内部错误，请稍后重试",
+    502: "Kimi 服务暂时不可用，请稍后重试",
+    503: "Kimi 服务维护中，请稍后重试",
 }
 
 
 def translate_error(status_code, response_text):
-    """将API错误翻译为中文"""
     msg = _ERROR_MESSAGES.get(status_code)
     if msg:
         return f"[{status_code}] {msg}"
@@ -68,36 +65,54 @@ def translate_error(status_code, response_text):
 
 
 def progress_bar(current, total, width=30):
-    """简单进度条（ASCII兼容）"""
     ratio = min(current / total, 1.0) if total > 0 else 0
     filled = int(width * ratio)
     bar = "#" * filled + "-" * (width - filled)
     return f"[{bar}] {ratio:.0%}"
 
 
-class ZhipuClient:
-    """智谱AI API基础客户端"""
+class KimiClient:
+    """Kimi AI API 基础客户端"""
 
-    DEFAULT_BASE_URL = "https://open.bigmodel.cn/api/paas/v4"
-    DEFAULT_IMAGE_MODEL = "cogview-4"
-    DEFAULT_VIDEO_MODEL = "cogvideox-3"
-    DEFAULT_VISION_MODEL = "glm-4.6v-flash"
-    DEFAULT_CHAT_MODEL = "glm-4-flash"
+    DEFAULT_BASE_URL = "https://api.moonshot.cn/v1"
+    DEFAULT_VISION_MODEL = "moonshot-v1-8k-vision-preview"
+    DEFAULT_CHAT_MODEL = "moonshot-v1-8k"
+
+    # ==== 以下模型仅在智谱(GLM)API下可用，已弃用 ====
+    DEFAULT_IMAGE_MODEL = None   # Kimi 不支持图片生成
+    DEFAULT_VIDEO_MODEL = None   # Kimi 不支持视频生成
 
     def __init__(self, api_key=None, base_url=None):
         self.api_key = api_key or self._load_api_key()
-        self.base_url = (base_url or os.environ.get("ZHIPU_BASE_URL") or self.DEFAULT_BASE_URL).rstrip("/")
+        # Auto-detect ARK base URL when using ARK_API_KEY
+        if not base_url and (os.environ.get("ARK_API_KEY") or
+                             (self.api_key and self.api_key.startswith("ark-"))):
+            default = "https://ark.cn-beijing.volces.com/api/v3"
+        else:
+            default = self.DEFAULT_BASE_URL
+        self.base_url = (base_url or os.environ.get("KIMI_BASE_URL") or
+                         os.environ.get("DASHSCOPE_BASE_URL") or
+                         default).rstrip("/")
 
         if not self.api_key:
             raise ValueError(
-                "ZHIPU_API_KEY 未设置。\n"
-                "请编辑 ~/.baoyu-skills/.env 添加: ZHIPU_API_KEY=你的密钥"
+                "KIMI_API_KEY 未设置。\n"
+                "请设置环境变量: KIMI_API_KEY=你的密钥\n"
+                "或编辑 ~/.baoyu-skills/.env 添加: KIMI_API_KEY=你的密钥"
             )
 
     @staticmethod
     def _load_api_key():
-        """从环境变量或.env文件加载API Key"""
-        key = os.environ.get("ZHIPU_API_KEY")
+        # ARK_API_KEY (火山引擎)
+        key = os.environ.get("ARK_API_KEY")
+        if key:
+            return key
+        # KIMI_API_KEY
+        key = os.environ.get("KIMI_API_KEY")
+        if key:
+            return key
+        # DASHSCOPE_API_KEY
+        key = os.environ.get("DASHSCOPE_API_KEY")
         if key:
             return key
 
@@ -113,7 +128,8 @@ class ZhipuClient:
                         continue
                     if "=" in line:
                         k, v = line.split("=", 1)
-                        if k.strip() == "ZHIPU_API_KEY":
+                        k = k.strip()
+                        if k in ("ARK_API_KEY", "KIMI_API_KEY", "DASHSCOPE_API_KEY"):
                             return v.strip().strip("\"'")
         return None
 
@@ -124,7 +140,6 @@ class ZhipuClient:
         }
 
     def _post(self, endpoint, json_body, timeout=60):
-        """发送POST请求，自动处理错误"""
         url = f"{self.base_url}{endpoint}"
         resp = requests.post(url, headers=self._headers(), json=json_body, timeout=timeout)
         if resp.status_code != 200:
@@ -132,7 +147,6 @@ class ZhipuClient:
         return resp
 
     def _get(self, endpoint, timeout=30):
-        """发送GET请求，自动处理错误"""
         url = f"{self.base_url}{endpoint}"
         resp = requests.get(url, headers=self._headers(), timeout=timeout)
         if resp.status_code != 200:
@@ -140,7 +154,6 @@ class ZhipuClient:
         return resp
 
     def _download_file(self, url, output_path, chunk_size=65536, timeout=120):
-        """下载文件并保存（带进度条）"""
         output_path = Path(output_path)
         output_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -160,3 +173,7 @@ class ZhipuClient:
         if total > 0:
             print()
         return str(output_path)
+
+
+# 向后兼容别名
+ZhipuClient = KimiClient
